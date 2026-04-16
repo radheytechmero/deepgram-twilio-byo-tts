@@ -1,7 +1,6 @@
-import * as https from "https";
+import * as http from "http";
 import * as querystring from "querystring";
 import { WebSocketServer, WebSocket } from 'ws';
-import * as fs from "fs";
 import { CONFIG } from './config';
 import { sessions, createOrUpdateSession, getSession, deleteSession } from './session';
 import { fetchMenu, findCustomer, findRestaurant } from './api';
@@ -9,13 +8,26 @@ import { connectToAgent, buildDynamicPrompt } from './agent';
 import { getNationalNumber } from './utils';
 import { SessionState } from "./types";
 
-const twilio = require("twilio");
-const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
+const isProduction = process.env.NODE_ENV === 'production';
 
-const server = https.createServer({
-    cert: fs.readFileSync('./cert.pem'),
-    key: fs.readFileSync('./key.pem'),
-}, (req, res) => {
+const createServer = () => {
+    if (isProduction) {
+        return http.createServer((req, res) => {
+            handleRequest(req, res);
+        });
+    } else {
+        const https = require('https');
+        const fs = require('fs');
+        return https.createServer({
+            cert: fs.readFileSync('./cert.pem'),
+            key: fs.readFileSync('./key.pem'),
+        }, (req: any, res: any) => {
+            handleRequest(req, res);
+        });
+    }
+};
+
+const handleRequest = (req: any, res: any) => {
     if (req.url === '/') {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('Hello');
@@ -91,6 +103,8 @@ const server = https.createServer({
 
             try {
                 if (session && session.customerPhone && session.restaurantNo) {
+                    const twilio = require("twilio");
+                    const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
                     setTimeout(async () => {
                         const recording = await client.calls(callSid).recordings.create({
                             recordingStatusCallback: `${CONFIG.API_BASE_URL}/api/recording?from=${encodeURIComponent(session.customerPhone)}&to=${encodeURIComponent(session.restaurantNo)}`
@@ -111,7 +125,9 @@ const server = https.createServer({
         res.writeHead(404);
         res.end();
     }
-});
+};
+
+const server = createServer();
 
 export const wss = new WebSocketServer({ server });
 
@@ -199,7 +215,8 @@ export function setupWebSocketServer(): void {
     });
 
     server.listen(CONFIG.PORT, () => {
-        console.log(`Listening on wss://localhost:${CONFIG.PORT}`);
+        const protocol = isProduction ? 'http' : 'https';
+        console.log(`Listening on ${protocol}://localhost:${CONFIG.PORT}`);
     });
 }
 
