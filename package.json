@@ -4,9 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node index.ts",
+    "start": "tsx --watch src/index.ts",
     "build": "tsc index.ts",
-    "dev": "tsx --watch index.ts",
+    "dev": "tsx --watch src/index.ts",
     "clean": "rm -rf index.js"
   },
   "keywords": [],
@@ -22,6 +22,8 @@
   },
   "dependencies": {
     "@deepgram/sdk": "^5.0.0",
+    "@tw2gem/audio-converter": "^1.0.1",
+    "audio-resampler": "^1.0.1",
     "axios": "^1.10.0",
     "dotenv": "^17.2.0",
     "libphonenumber-js": "^1.12.10",
