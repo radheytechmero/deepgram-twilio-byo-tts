@@ -63,7 +63,7 @@ export async function connectToAgent(prompt: string, session: SessionState): Pro
             };
             detectedSpeakProviderType = 'open_ai';
         }
-        const openAISpeak = speakProvider?.provider?.type === 'openai';
+        const openAISpeak = detectedSpeakProviderType === 'open_ai';
         const audioOutputSettings = openAISpeak
         ? { encoding: 'linear16', sample_rate: 24000, container: 'none' }
         : { encoding: CONFIG.AUDIO_OUTPUT.encoding, sample_rate: CONFIG.AUDIO_OUTPUT.sampleRate, container: CONFIG.AUDIO_OUTPUT.container }
