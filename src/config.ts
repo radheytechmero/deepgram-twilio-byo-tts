@@ -1,7 +1,13 @@
 export const CONFIG = {
     API_BASE_URL: process.env.API_BASE_URL || "https://ptmq4121-5002.inc1.devtunnels.ms",
     WSS_BACKEND_BASE_URL: process.env.WSS_BACKEND_BASE_URL || "wss://ptmq4121-443.inc1.devtunnels.ms",
-    PORT: parseInt(process.env.PORT || '443', 10),
+    // Binding to ports <1024 (like 443) requires elevated privileges on Linux.
+    // Default to 3001 for local/dev unless the user explicitly sets `PORT`.
+    PORT: (() => {
+        const fromEnv = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : NaN;
+        if (Number.isFinite(fromEnv)) return fromEnv;
+        return 3001;
+    })(),
     DEEPGRAM_LISTEN_PROVIDER: {
         type: 'deepgram' as const,
         version: 'v1' as const,

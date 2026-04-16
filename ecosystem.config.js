@@ -11,7 +11,8 @@ module.exports = {
         PORT: 443
       },
       env_production: {
-        NODE_ENV: 'production'
+        NODE_ENV: 'production',
+        PORT: 5558
       },
       exp_backoff_restart_delay: 100,
       error_file: 'logs/err.log',

@@ -1,4 +1,7 @@
-import { AudioConverter } from '@tw2gem/audio-converter';
+// `@tw2gem/audio-converter` sets `"main": "src/index.ts"`, which breaks on Node 25
+// (Node refuses to "strip types" for TS files under `node_modules`). Import the
+// dependency's published JS entry instead.
+import { AudioConverter } from '@tw2gem/audio-converter/dist';
 import { SessionState } from './types';
 
 export async function forwardAgentAudioToTwilio(audio: unknown, session: SessionState): Promise<void> {
