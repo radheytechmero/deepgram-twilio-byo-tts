@@ -2,8 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'deepgram-twillio',
-      script: 'src/index.ts',
-      interpreter: 'tsx',
+      script: 'dist/index.js',
       instances: 1,
       exec_mode: 'cluster',
       watch: false,
