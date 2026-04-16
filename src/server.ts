@@ -105,12 +105,34 @@ const handleRequest = (req: any, res: any) => {
                 if (session && session.customerPhone && session.restaurantNo) {
                     const twilio = require("twilio");
                     const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
-                    setTimeout(async () => {
-                        const recording = await client.calls(callSid).recordings.create({
-                            recordingStatusCallback: `${CONFIG.API_BASE_URL}/api/recording?from=${encodeURIComponent(session.customerPhone)}&to=${encodeURIComponent(session.restaurantNo)}`
-                        });
-                        console.log("🎙️ Recording started:", recording.sid);
-                    }, CONFIG.RECORDING_DELAY_MS);
+                    
+                    const startRecording = async (attempt = 0) => {
+                        try {
+                            const call = await client.calls(callSid).fetch();
+                            if (call.status !== 'in-progress') {
+                                if (attempt < 3) {
+                                    console.log(`Call not ready (status: ${call.status}), retrying in ${CONFIG.RECORDING_DELAY_MS}ms...`);
+                                    setTimeout(() => startRecording(attempt + 1), CONFIG.RECORDING_DELAY_MS);
+                                } else {
+                                    console.error(`Call status is ${call.status}, cannot start recording`);
+                                }
+                                return;
+                            }
+                            const recording = await client.calls(callSid).recordings.create({
+                                recordingStatusCallback: `${CONFIG.API_BASE_URL}/api/recording?from=${encodeURIComponent(session.customerPhone)}&to=${encodeURIComponent(session.restaurantNo)}`
+                            });
+                            console.log("🎙️ Recording started:", recording.sid);
+                        } catch (err: any) {
+                            if (err.code === 21220 && attempt < 3) {
+                                console.log(`Recording not eligible, retrying in ${CONFIG.RECORDING_DELAY_MS}ms... (attempt ${attempt + 1}/3)`);
+                                setTimeout(() => startRecording(attempt + 1), CONFIG.RECORDING_DELAY_MS);
+                            } else {
+                                console.error("❌ Error starting recording:", err);
+                            }
+                        }
+                    };
+                    
+                    setTimeout(() => startRecording(0), CONFIG.RECORDING_DELAY_MS);
                 }
             } catch (err) {
                 console.error("❌ Error starting recording:", err);
